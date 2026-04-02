@@ -46,23 +46,34 @@ A estrutura foi modelada focando em referenciamento entre coleções para manter
    node index.js
 
 **Documentação das Rotas (Endpoints)**
+
+
 **Gestão de Usuários e Clientes**
+
 POST /usuarios: Cadastra um novo vendedor (vínculo com metas).
 
 POST /clientes: Cadastra um cliente (necessário enviar usuario_id do vendedor).
 
+
 **Planos e Serviços**
+
 POST /planos: Cria opções de planos (Mensal, Semestral, etc).
 
+
 **Operações de Venda**
+
 POST /vendas: Registra uma transação.
 
 Payload esperado: { cliente_id, usuario_id, plano_id, valor_fechado }
 
+
 **Task: Consultas e Inteligência de Dados**
+
 GET /ganhos-mes: Implementação de Aggregation Pipeline para filtrar e somar o faturamento total das vendas realizadas no mês vigente.
 
+
 **Desenvolvedor Responsável**
+
 Leonardo Gonçalves Martins (Back-end & DBA)
 
 Responsável pela infraestrutura de rede no MongoDB Atlas.
