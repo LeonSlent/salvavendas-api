@@ -13,7 +13,7 @@ Este projeto é a API central do ecossistema **SalvaVendas**, responsável por g
 
 ---
 
-## 📊 Modelagem de Dados (NoSQL)
+## Modelagem de Dados (NoSQL)
 
 A estrutura foi modelada focando em referenciamento entre coleções para manter a integridade dos dados de venda:
 
@@ -24,7 +24,7 @@ A estrutura foi modelada focando em referenciamento entre coleções para manter
 
 ---
 
-## ⚙️ Instalação e Execução
+## Instalação e Execução
 
 1. **Clone o repositório:**
    ```bash
