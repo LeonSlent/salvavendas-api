@@ -131,3 +131,115 @@ app.post('/vendas', async (req, res) => {
     res.status(500).json({ erro: "Erro ao calcular ganhos", detalhe: error.message });
   }
 });
+
+
+// Consulta total de vendas dos ultimos 6 meses, separando mes a mes e o total final
+app.get('/ganhos-geral-e-por-mes', async (req, res) => {
+  try {
+    const dataAtual = new Date();
+    const seisMesesAtras = new Date();
+    // Volta 6 meses no calendário
+    seisMesesAtras.setMonth(dataAtual.getMonth() - 6);
+
+    const relatorio = await db.collection('vendas').aggregate([
+      {
+        $match: {
+          dta_venda: {
+            $gte: seisMesesAtras,
+            $lte: dataAtual
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            ano: { $year: "$dta_venda" },
+            mes: { $month: "$dta_venda" }
+          },
+          totalGanhos: { $sum: "$valor_fechado" },
+          quantidadeVendas: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id.ano": 1, "_id.mes": 1 } // Ordena do mais antigo para o mais recente
+      }
+    ]).toArray();
+
+    // Calcula os totais gerais somando os valores de cada mês
+    let totalGerais = {
+      totalGanhos: 0,
+      quantidadeVendas: 0
+    };
+
+    relatorio.forEach(item => {
+      totalGerais.totalGanhos += item.totalGanhos;
+      totalGerais.quantidadeVendas += item.quantidadeVendas;
+    });
+
+    // Retorna o objeto com ambos os resultados
+    res.json({
+      totalGeral: totalGerais,
+      historicoMensal: relatorio
+    });
+
+  } catch (error) {
+    res.status(500).json({ erro: "Erro ao calcular ganhos", detalhe: error.message });
+  }
+});
+
+// Rota para consultar a meta atual do usuário
+app.get('/usuarios/:id/meta-atual', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Busca o usuário pelo ID
+    const usuario = await db.collection('usuarios').findOne({ _id: new ObjectId(id) });
+
+    // Verifica se o usuário existe
+    if (!usuario) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+
+    // Verifica se o usuário possui metas cadastradas
+    if (!usuario.metas || usuario.metas.length === 0) {
+      return res.status(404).json({ mensagem: "Nenhuma meta encontrada para este usuário" });
+    }
+
+    // Pega a meta atual (assumindo que a meta atual é a última inserida no array)
+    const metaAtual = usuario.metas[usuario.metas.length - 1];
+
+    res.json(metaAtual);
+  } catch (error) {
+    res.status(500).json({ erro: "Erro ao buscar meta", detalhe: error.message });
+  }
+});
+
+
+// Pega os 5 clientes mais recentes
+app.get('/clientes/recentes', async (req, res) => {
+  try {
+    const clientes = await db.collection('clientes')
+      .find()
+      .sort({ _id: -1 }) // -> Ordena do mais recente para o mais antigo
+      .limit(5) // -> Pega apenas os 5 primeiros
+      .toArray();
+
+    res.json(clientes);
+  } catch (error) {
+    res.status(500).json({ erro: "Erro ao buscar clientes", detalhe: error.message });
+  }
+});
+
+// Pega todos os clientes
+app.get('/clientes/total', async (req, res) => {
+  try {
+    const clientes = await db.collection('clientes')
+      .find()
+      .sort({ _id: -1 }) // -> Ordena do mais recente para o mais antigo
+      .toArray();
+
+    res.json(clientes);
+  } catch (error) {
+    res.status(500).json({ erro: "Erro ao buscar clientes", detalhe: error.message });
+  }
+});
