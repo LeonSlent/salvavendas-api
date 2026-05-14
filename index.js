@@ -31,18 +31,43 @@ connectDB();
 // Rota de Cadastro de Usuário
 app.post('/usuarios', async (req, res) => {
   try {
+    const { nome, email, telefone, metas } = req.body;
+
+    // 1. Verifica se já existe um usuário com o mesmo e-mail OU telefone
+    const usuarioExistente = await db.collection('usuarios').findOne({
+      $or: [
+        { email: email },
+        { telefone: telefone }
+      ]
+    });
+
+    if (usuarioExistente) {
+      return res.status(400).json({ 
+        erro: "Cadastro inválido", 
+        detalhe: "Já existe um usuário com este e-mail ou telefone." 
+      });
+    }
+
+    // 2. Se passar pelo filtro, cria o objeto do novo usuário
     const novoUsuario = {
-      nome: req.body.nome,
-      email: req.body.email,
-      telefone: req.body.telefone,
-      // Metas é um array de objetos
-      metas: req.body.metas || [] 
+      nome: nome,
+      email: email,
+      telefone: telefone,
+      metas: metas || [] 
     };
-    
+
     const resultado = await db.collection('usuarios').insertOne(novoUsuario);
-    res.status(201).json({ mensagem: "Usuário criado!", id: resultado.insertedId });
+    
+    res.status(201).json({ 
+      mensagem: "Usuário criado com sucesso!", 
+      id: resultado.insertedId 
+    });
+
   } catch (error) {
-    res.status(500).json({ erro: "Erro ao salvar usuário", detalhe: error.message });
+    res.status(500).json({ 
+      erro: "Erro ao salvar usuário", 
+      detalhe: error.message 
+    });
   }
 });
 
@@ -50,17 +75,40 @@ app.post('/usuarios', async (req, res) => {
 // Rota de cadastro de clientes 
 app.post('/clientes', async (req, res) => {
   try {
+    const { usuario_id, nome, email, telefone, status } = req.body;
+
+    // 1. Verifica se já existe um cliente com o mesmo e-mail OU telefone
+    const clienteExistente = await db.collection('clientes').findOne({
+      $or: [
+        { email: email },
+        { telefone: telefone }
+      ]
+    });
+
+    if (clienteExistente) {
+      return res.status(400).json({ 
+        erro: "Conflito de dados", 
+        detalhe: "Já existe um cliente cadastrado com este e-mail ou telefone." 
+      });
+    }
+
+    // 2. Se não existir, cria o novo cliente vinculado ao vendedor
     const novoCliente = {
-      usuario_id: new ObjectId(req.body.usuario_id), // Vendedor que cadastrou o cliente
-      nome: req.body.nome,
-      email: req.body.email,
-      telefone: req.body.telefone,
-      status: req.body.status || "ativo"
+      usuario_id: new ObjectId(usuario_id), 
+      nome: nome,
+      email: email,
+      telefone: telefone,
+      status: status || "ativo"
     };
+
     const resultado = await db.collection('clientes').insertOne(novoCliente);
-    res.status(201).json(resultado);
+    res.status(201).json({ mensagem: "Cliente cadastrado com sucesso!", id: resultado.insertedId });
+
   } catch (error) {
-    res.status(400).json({ erro: "Erro ao cadastrar cliente. Verifique o ID do usuário." });
+    res.status(400).json({ 
+      erro: "Erro ao cadastrar cliente", 
+      detalhe: "Verifique se o ID do usuário é válido ou se os campos estão corretos." 
+    });
   }
 });
 
